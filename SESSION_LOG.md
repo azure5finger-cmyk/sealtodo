@@ -110,3 +110,45 @@ d11384b  01:20  feat: 할 일 추가 기능 구현
 1. **프롬프트 문서는 git에 포함해야 한다** — gitignore하면 clone 시 유실되어 프로젝트 재현이 불가능하다.
 2. **문서 체계는 콘텍스트 윈도우를 고려해서 설계한다** — 항상 로드(CLAUDE.md)는 짧게, 상세(STRATEGY.md)는 참조로, 빌드 프롬프트(AGENT_PROMPT.md)는 수동 로드로 분리.
 3. **누적 문서는 운영 규칙이 필요하다** — "언제, 어떤 형식으로, 누가 갱신하는가"를 명시하지 않으면 방치된다.
+
+---
+
+# 세션 — 2026-04-03 (3차)
+
+AGENT_PROMPT.md를 기반으로 Phase 0~4 전체 자율 실행 (새 환경에서 처음부터 빌드).
+
+## 타임라인
+
+| 시각 | 작업 | 결과 |
+|---|---|---|
+| Phase 0 | uv init + 의존성 설치 (fastapi, uvicorn, aiosqlite, jinja2, pytest, httpx) | .venv 생성 완료 |
+| Phase 0 | Makefile, .gitignore, ci.yml, docs/STRATEGY.md, app/ 구조 생성 | git commit: chore: Harness 세팅 |
+| Phase 0 | 서버 기동 확인 (Starlette 1.0.0 TemplateResponse API 변경 대응) | v0.0.1 태그 |
+| Phase 1 | gh CLI 없어 GitHub Issues 스킵 | main 브랜치에서 직접 구현으로 전환 |
+| Phase 2 L1 | models.py (TodoCreate/Update/Response + field_validator) | Pydantic v2 호환 |
+| Phase 2 L1 | database.py CRUD 5개 함수 (f-string SQL 없이 명시적 분기) | 보안 정책 준수 |
+| Phase 2 L1 | routers/todos.py 4개 엔드포인트 (GET/POST/PATCH/DELETE) | 400/404/422 에러코드 |
+| Phase 2 L1 | style.css (MUJI 스타일, ::after 터치타겟, shake 애니메이션) | gradient 0, border-radius ≤ 8px |
+| Phase 2 L1 | app.js (SPA, Optimistic Update, 인라인 수정, 삭제 애니메이션) | innerHTML 정적 요소만 |
+| Phase 2 L1 | tests/test_todos.py 14개 테스트 | 14/14 PASS |
+| Phase 2 L2 | handleToggle/handleDelete/startEditing — L1에서 이미 구현 완료 | 추가 작업 없음 |
+| Phase 4 | 통합 검증: pytest 14/14, 코드 품질/보안/접근성 체크 전부 통과 | v0.1.0 태그 |
+
+## 발견된 문제
+
+| 문제 | 원인 | 해결 |
+|---|---|---|
+| TemplateResponse TypeError | Starlette 1.0.0에서 API 변경 (dict → request first) | `TemplateResponse(request, "index.html")` 로 수정 |
+| gh CLI 없음 | Windows 환경에 미설치 | Phase 1 스킵, 브랜치 워크플로우는 로컬로 진행 |
+| Makefile lsof 명령어 | Windows에 lsof 없음 | netstat 기반으로 교체 |
+
+## 커밋
+
+- `67f51cd` — chore: Harness 세팅 — uv, Makefile, CI, CLAUDE.md, STRATEGY.md
+- `5e6066c` — feat: 할 일 추가 + 목록 조회 + CRUD API (#1, #2)
+
+## 교훈
+
+1. **Starlette 1.0.0에서 TemplateResponse 시그니처 변경** — `{"request": request}` dict 방식 폐지, `TemplateResponse(request, name)` 사용.
+2. **Layer 1/2 분리는 의존성 정렬용** — 실제 구현에서는 L1에서 전체 기능을 구현해도 테스트가 통과하면 L2 추가 작업 불필요.
+3. **Windows 환경에서 Makefile 주의** — lsof가 없으므로 netstat으로 포트 확인해야 함.
