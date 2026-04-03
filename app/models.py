@@ -46,3 +46,4 @@ class TodoResponse(BaseModel):
     completed: bool
     position: int
     created_at: str
+    completed_at: Optional[str] = None

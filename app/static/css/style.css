@@ -32,11 +32,20 @@ body {
 }
 
 .app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   margin-bottom: 24px;
   color: var(--color-text);
+}
+
+.app-mascot {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 /* Form */
@@ -193,13 +202,26 @@ body {
   display: block;
 }
 
-/* Title */
-.todo-title {
+/* Title + meta wrapper */
+.todo-body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.todo-title {
   font-size: 0.9375rem;
   color: var(--color-text);
-  min-width: 0;
   word-break: break-word;
+}
+
+.todo-meta {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  opacity: 0.4;
+  line-height: 1.4;
 }
 
 /* Edit input */

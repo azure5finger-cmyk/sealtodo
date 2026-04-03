@@ -45,7 +45,10 @@ async function toggleTodo(id, completed) {
   if (!todo) return;
 
   // Optimistic update
+  const prevCompleted = todo.completed;
+  const prevCompletedAt = todo.completed_at;
   todo.completed = completed;
+  todo.completed_at = completed ? new Date().toISOString().replace("T", " ").slice(0, 19) : null;
   renderTodos();
 
   try {
@@ -60,7 +63,8 @@ async function toggleTodo(id, completed) {
     renderTodos();
   } catch {
     // Rollback
-    todo.completed = !completed;
+    todo.completed = prevCompleted;
+    todo.completed_at = prevCompletedAt;
     renderTodos();
   }
 }
@@ -83,6 +87,21 @@ async function updateTodoTitle(id, title) {
   const todo = todos.find((t) => t.id === id);
   if (todo) Object.assign(todo, updated);
   renderTodos();
+}
+
+function formatDatetime(isoStr) {
+  if (!isoStr) return null;
+  // SQLite returns "YYYY-MM-DD HH:MM:SS" — display as-is
+  return isoStr.replace("T", " ").slice(0, 19);
+}
+
+function formatMeta(todo) {
+  const created = formatDatetime(todo.created_at);
+  const completed = formatDatetime(todo.completed_at);
+  if (completed) {
+    return `추가: ${created}  |  완료: ${completed}`;
+  }
+  return `추가: ${created}`;
 }
 
 function renderTodos() {
@@ -114,10 +133,20 @@ function createTodoElement(todo) {
   checkMark.innerHTML = "&#10003;";
   checkbox.appendChild(checkMark);
 
-  // Title
+  // Body (title + meta)
+  const body = document.createElement("div");
+  body.className = "todo-body";
+
   const titleSpan = document.createElement("span");
   titleSpan.className = "todo-title";
   titleSpan.textContent = todo.title;
+
+  const meta = document.createElement("span");
+  meta.className = "todo-meta";
+  meta.textContent = formatMeta(todo);
+
+  body.appendChild(titleSpan);
+  body.appendChild(meta);
 
   // Delete button
   const deleteBtn = document.createElement("button");
@@ -126,7 +155,7 @@ function createTodoElement(todo) {
   deleteBtn.innerHTML = "&times;";
 
   li.appendChild(checkbox);
-  li.appendChild(titleSpan);
+  li.appendChild(body);
   li.appendChild(deleteBtn);
 
   // Event handlers

@@ -19,14 +19,14 @@ router = APIRouter(prefix="/api/todos", tags=["todos"])
 async def list_todos(db=Depends(get_db)):
     """Return all todos ordered by position ASC, created_at DESC."""
     todos = await fetch_all_todos(db)
-    return [TodoResponse(**{**t, "created_at": str(t["created_at"])}) for t in todos]
+    return [TodoResponse(**{**t, "created_at": str(t["created_at"]), "completed_at": str(t["completed_at"]) if t["completed_at"] else None}) for t in todos]
 
 
 @router.post("/", response_model=TodoResponse, status_code=201)
 async def add_todo(body: TodoCreate, db=Depends(get_db)):
     """Create a new todo item."""
     todo = await create_todo(db, body.title)
-    return TodoResponse(**{**todo, "created_at": str(todo["created_at"])})
+    return TodoResponse(**{**todo, "created_at": str(todo["created_at"]), "completed_at": None})
 
 
 @router.patch("/{todo_id}", response_model=TodoResponse)
@@ -40,7 +40,7 @@ async def update_todo_endpoint(todo_id: int, body: TodoUpdate, db=Depends(get_db
         raise HTTPException(status_code=404, detail="할 일을 찾을 수 없습니다")
 
     todo = await update_todo(db, todo_id, title=body.title, completed=body.completed)
-    return TodoResponse(**{**todo, "created_at": str(todo["created_at"])})
+    return TodoResponse(**{**todo, "created_at": str(todo["created_at"]), "completed_at": str(todo["completed_at"]) if todo["completed_at"] else None})
 
 
 @router.delete("/{todo_id}", status_code=204)
